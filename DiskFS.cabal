@@ -1,0 +1,38 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           DiskFS
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/s-zeng/haskell-monads-showcase#readme>
+homepage:       https://github.com/s-zeng/haskell-monads-showcase#readme
+bug-reports:    https://github.com/s-zeng/haskell-monads-showcase/issues
+author:         Simon Zeng
+maintainer:     contact@simonzeng.com
+copyright:      2021 Simon Zeng
+license:        AGPLv3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/s-zeng/haskell-monads-showcase
+
+executable diskfs-exe
+  main-is: DiskFS.hs
+  other-modules:
+      Paths_DiskFS
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -W -Werror -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , mtl
+    , transformers
+  default-language: Haskell2010
