@@ -100,7 +100,8 @@ class Disk a where
 -- | Store contents of disks and files as Map instead of array for convenience. perf optimization: replace with array
 newtype ContiguousData = ContiguousData {cData :: Map Int Char} deriving (Eq, Ord, Semigroup, Monoid)
 
--- | TODO: auto derive this w/ @Coercible@
+-- | Change of basis from Map Int Char to ContiguousData
+-- TODO: auto derive this w/ @Coercible@
 cMap :: (Map Int Char -> Map Int Char) -> ContiguousData -> ContiguousData
 cMap f = ContiguousData . f . cData
 
@@ -359,4 +360,5 @@ mkStartingDisk = do
 main :: IO ()
 main = do
   startingDisk <- mkStartingDisk
-  evalStateT (runReaderT (runSimulation sampleProgram) startingDisk) startingFileSystem
+  runReaderT (evalStateT (runSimulation sampleProgram) startingFileSystem) startingDisk
+  -- evalStateT (runReaderT (runSimulation sampleProgram) startingDisk) startingFileSystem
