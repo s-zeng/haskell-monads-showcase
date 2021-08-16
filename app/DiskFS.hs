@@ -131,8 +131,6 @@ type ReverseLookup = Map Int File
 data FileSystem = FileSystem
   { -- | Set of files on disk
     files :: Set File,
-    -- | Set of filenames on disk
-    fileNames :: Set FileName,
     -- | Map of disk position -> file
     freverseLookup :: ReverseLookup,
     -- | Index of lowest free position (we don't support delete so no fragmentation)
@@ -152,7 +150,7 @@ createFile ::
   String ->
   String ->
   m FileSystem
-createFile (FileSystem files fileNames rl freeIndex ftr) filename fcontents = do
+createFile (FileSystem files rl freeIndex ftr) filename fcontents = do
   disk <- ask -- ask for disk from environment
   let contentsMap = ContiguousData $ Map.fromList (zip [0 ..] fcontents)
       newFile = File filename freeIndex (length fcontents) contentsMap
@@ -160,21 +158,20 @@ createFile (FileSystem files fileNames rl freeIndex ftr) filename fcontents = do
   -- guard: if any bool fails, return Nothing
   guard (position newFile + size newFile <= dlength disk)
   guard (0 <= position newFile + size newFile)
-  guard (not (Set.member filename fileNames))
+  guard (not (Set.member filename $ Set.map name files))
 
   let newFiles = Set.insert newFile files
       newRl = foldl (\rlAccum index -> Map.insert index newFile rlAccum) rl [freeIndex, freeIndex + 1 .. newFreeIndex - 1]
-      newFileNames = Set.insert filename fileNames
       newFreeIndex = freeIndex + length fcontents
 
-  return (FileSystem newFiles newFileNames newRl newFreeIndex ftr)
+  return (FileSystem newFiles newRl newFreeIndex ftr)
 
 -- | `onDiskSpin` also has access to a disk env, and has access to IO
 onDiskSpin ::
   (Monad m, Disk a, MonadReader a m, MonadIO m) =>
   FileSystem ->
   m FileSystem
-onDiskSpin fs@(FileSystem files fileNames rl freeIndex readHandles) = evalContT . callCC $ \ret -> do
+onDiskSpin fs@(FileSystem files rl freeIndex readHandles) = evalContT . callCC $ \ret -> do
   disk <- ask
   curPos <- liftIO $ current_position disk
 
@@ -190,8 +187,7 @@ onDiskSpin fs@(FileSystem files fileNames rl freeIndex readHandles) = evalContT 
   let newFile = File (name file) (position file) (size file) (cMap (Map.delete (curPos - position file)) (unwrittenContents file))
       newFiles = Set.insert newFile (Set.delete file files)
       newRl = Map.insert curPos newFile (Map.delete curPos rl)
-      newFileNames = Set.insert (name file) fileNames
-  return $ FileSystem newFiles newFileNames newRl freeIndex readHandles
+  return $ FileSystem newFiles newRl freeIndex readHandles
   where
     updateHandle :: File -> Int -> Char -> ReadHandle -> ReadHandle
     updateHandle file curPosition char handle =
@@ -208,7 +204,7 @@ readFile ::
   String ->
   m (IORef ReadHandle)
 readFile fileName = evalContT . callCC $ \ret -> do
-  (FileSystem _files _fileNames _rl _freeIndex filesToRead) <- get
+  (FileSystem _files __rl _freeIndex filesToRead) <- get
 
   let oldHandle = Map.lookup fileName filesToRead
   case oldHandle of
@@ -298,7 +294,6 @@ printFs fs = do
     unwords
       [ "FileSystem",
         show $ files fs,
-        show $ fileNames fs,
         show $ freverseLookup fs,
         show $ freeIndex fs,
         show ftr
@@ -349,7 +344,7 @@ runSimulation (Bind a mb) = do
   runSimulation (mb aRes)
 
 startingFileSystem :: FileSystem
-startingFileSystem = FileSystem mempty mempty mempty 0 mempty
+startingFileSystem = FileSystem mempty mempty 0 mempty
 
 mkStartingDisk :: IO ConcreteDisk
 mkStartingDisk = do
