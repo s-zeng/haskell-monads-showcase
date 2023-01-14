@@ -74,7 +74,7 @@ import Control.Monad.State.Strict
   )
 import Control.Monad.Trans.Cont (callCC, evalContT)
 import Control.Monad.Trans.Reader (runReaderT)
-import Control.Monad.Trans.State.Strict (evalStateT, runStateT)
+import Control.Monad.Trans.State.Strict (evalStateT)
 import Data.Foldable (traverse_)
 import Data.IORef
   ( IORef,
@@ -100,9 +100,9 @@ class Disk a where
 -- | Store contents of disks and files as Map instead of array for convenience. perf optimization: replace with array
 newtype ContiguousData = ContiguousData {cData :: Map Int Char} deriving (Eq, Ord, Semigroup, Monoid)
 
--- | Change of basis from Map Int Char to ContiguousData
+-- | Change of basis from `Map Int Char` to @ContiguousData@
 -- TODO: auto derive this w/ @Coercible@
-cMap :: (Map Int Char -> Map Int Char) -> ContiguousData -> ContiguousData
+cMap :: (Map Int Char -> Map Int Char) -> (ContiguousData -> ContiguousData)
 cMap f = ContiguousData . f . cData
 
 instance Show ContiguousData where
@@ -289,7 +289,6 @@ instance Disk ConcreteDisk where
 printFs :: FileSystem -> IO ()
 printFs fs = do
   ftr :: Map String ReadHandle <- traverse readIORef (filesToRead fs)
-  print ftr
   putStrLn $
     unwords
       [ "FileSystem",
@@ -328,8 +327,8 @@ runSimulation (SpinTo i) = do
   put newFs
 -- liftIO . putStrLn $ unwords ["Spun to", show i]
 runSimulation (TryRead name) = do
-  fs <- get
-  (handleRef, newFs) <- liftIO $ runStateT (readFile name) fs
+  handleRef <- readFile name
+  newFs <- get
   handle <- liftIO $ readIORef handleRef
   liftIO . putStrLn $ unwords ["Reading", name, "->", show handle]
   put newFs
