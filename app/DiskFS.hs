@@ -13,7 +13,7 @@
 -- Stability   :  experimental
 -- Portability :  portable
 --
--- You have an ADT for a hard drive (black blox implementation):
+-- You have an interface for a hard drive (black blox implementation):
 --
 -- > class Disk:
 -- >   - int length ()
@@ -21,7 +21,7 @@
 -- >   - char read()
 -- >   - void write(char ch)
 --
--- and then an ADT for a file system on top of the hard drive:
+-- and then an interface for a file system on top of the hard drive:
 --
 -- > class FileSystem(Disk d)
 -- >   - void create_file(string filename, string contents)
