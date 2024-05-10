@@ -63,7 +63,7 @@
 -- Task: implement @read_file@, and modify @on_disk_spin@ to populate read handles
 module Main where
 
-import Control.Monad (MonadPlus, ap, guard, liftM)
+import Control.Monad (MonadPlus, ap, guard, liftM, forM_)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Reader.Class (MonadReader, ask)
 import Control.Monad.State.Strict
@@ -247,22 +247,22 @@ sampleProgram = do
   TryRead "file1"
   TryRead "file2"
   TryRead "file3"
-  traverse_ SpinTo [0 .. 12]
-  traverse_ SpinTo [12, 11 .. 0]
+  forM_ [0 .. 12] SpinTo
+  forM_ [12, 11 .. 0] SpinTo
   TryRead "file1"
   TryRead "file2"
   TryRead "file3"
-  traverse_ SpinTo [15, 17]
+  forM_ [15, 17] SpinTo
   TryRead "file1"
   TryRead "file2"
   TryRead "file3"
-  traverse_ SpinTo [12 .. 20]
+  forM_ [12 .. 20] SpinTo
   TryRead "file1"
   TryRead "file2"
   TryRead "file3"
   TryCreateFile "file3" "nn"
   TryRead "file3"
-  traverse_ SpinTo [0 .. 100]
+  forM_ [0 .. 100] SpinTo
   TryRead "file3"
   PrintState
 
